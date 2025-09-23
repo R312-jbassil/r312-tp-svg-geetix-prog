@@ -1,44 +1,52 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import PocketBase from 'pocketbase';
+import PocketBase from "pocketbase";
 
-const pb = new PocketBase('http://127.0.0.1:8090/');
+const pb = new PocketBase("http://127.0.0.1:8090/");
 
 let svgRecords = [];
 try {
-    const records = await pb.collection('SVG').getList(1, 50, {
-        sort: '-created',
+    const records = await pb.collection("SVG").getList(1, 50, {
+        sort: "-created",
     });
     svgRecords = records.items;
 } catch (error) {
-    console.error('Erreur lors de la récupération des données:', error);
+    console.error("Erreur lors de la récupération des données:", error);
 }
 ---
 
 <Layout>
     <div class="min-h-screen bg-gradient-to-br from-purple-200 to-gray-100 p-8">
         <div class="max-w-6xl mx-auto">
-            <h1 class="text-3xl font-bold text-center text-purple-800 mb-8">Galerie SVG</h1>
-            
-            {svgRecords.length === 0 ? (
-                <div class="text-center py-16">
-                    <p class="text-xl text-gray-600">Aucun SVG trouvé.</p>
-                </div>
-            ) : (
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {svgRecords.map((record) => (
-                        <div class="bg-white rounded-lg shadow-md p-4">
-                            <div class="h-48 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-                                <div set:html={record.code}></div>
+            <h1 class="text-3xl font-bold text-center text-purple-800 mb-8">
+                Galerie SVG
+            </h1>
+
+            {
+                svgRecords.length === 0 ? (
+                    <div class="text-center py-16">
+                        <p class="text-xl text-gray-600">Aucun SVG trouvé.</p>
+                    </div>
+                ) : (
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {svgRecords.map((record) => (
+                            <div class="bg-white rounded-lg shadow-md p-4">
+                                <div class="h-48 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
+                                    <div set:html={record.code} />
+                                </div>
+                                <p class="text-gray-700 text-sm">
+                                    {record.prompt}
+                                </p>
+                                <p class="text-gray-400 text-xs mt-2">
+                                    {new Date(
+                                        record.created,
+                                    ).toLocaleDateString("fr-FR")}
+                                </p>
                             </div>
-                            <p class="text-gray-700 text-sm">{record.prompt}</p>
-                            <p class="text-gray-400 text-xs mt-2">
-                                {new Date(record.created).toLocaleDateString('fr-FR')}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )
+            }
         </div>
     </div>
 </Layout>
