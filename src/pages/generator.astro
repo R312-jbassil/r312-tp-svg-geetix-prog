@@ -54,7 +54,48 @@ import Layout from "../layouts/Layout.astro";
                     </defs>
                 </svg>
             </button>
-            <button class="btn btn-secondary m-2" id="edit-button">Edit</button>
+            <button class="btn btn-secondary m-2" id="edit-button">✏️</button>
+            <button
+                id="save-button"
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-4 cursor-pointer rounded-md ml-2 hidden"
+            >
+                💾
+            </button>
+        </div>
+    </div>
+
+    <dialog id="saveModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Sauvegarder le SVG</h3>
+            <p class="py-4">
+                Voulez-vous sauvegarder ce SVG dans votre galerie ?
+            </p>
+
+            <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                <div
+                    id="modalSvgPreview"
+                    class="flex items-center justify-center h-32"
+                >
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <button id="confirmSave" class="btn btn-success"
+                    >Oui, sauvegarder</button
+                >
+                <button id="cancelSave" class="btn btn-outline"
+                    >Non, annuler</button
+                >
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <div id="toast" class="toast toast-end hidden">
+        <div class="alert alert-success">
+            <span>SVG sauvegardé avec succès !</span>
         </div>
     </div>
 </Layout>
@@ -64,8 +105,10 @@ import Layout from "../layouts/Layout.astro";
 
     let promptList = [];
     let loading = false;
+    let currentPrompt = "";
+    let currentSvgCode = "";
 
-    async function saveToPocketBase(prompt, svgCode) {
+    async function saveToPocketBase(prompt, svgCode, chatHistory) {
         try {
             const response = await fetch("/api/saveSVG", {
                 method: "POST",
@@ -73,20 +116,35 @@ import Layout from "../layouts/Layout.astro";
                 body: JSON.stringify({
                     prompt: prompt,
                     code: svgCode,
+                    chat_history: chatHistory,
                 }),
             });
 
             if (response.ok) {
-                console.log("Données sauvegardées dans PocketBase");
+                showToast("SVG sauvegardé avec succès !");
+                return true;
             } else {
                 console.error(
                     "Erreur lors de la sauvegarde:",
                     await response.text(),
                 );
+                return false;
             }
         } catch (error) {
             console.error("Erreur lors de la sauvegarde:", error);
+            return false;
         }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        const alertDiv = toast.querySelector(".alert");
+        alertDiv.querySelector("span").textContent = message;
+        toast.classList.remove("hidden");
+
+        setTimeout(() => {
+            toast.classList.add("hidden");
+        }, 3000);
     }
 
     async function generateSVG(messages) {
@@ -109,8 +167,11 @@ import Layout from "../layouts/Layout.astro";
         promptList.push({ role: "user", content: prompt });
 
         const svgContainer = document.getElementById("svg-container");
+        const saveButton = document.getElementById("save-button");
+
         svgContainer.innerHTML = `<span class="loading loading-ring loading-xl"></span>`;
         generateButton.disabled = true;
+        saveButton.classList.add("hidden");
 
         let svgOutput = document.getElementById("svg-output");
 
@@ -126,7 +187,9 @@ import Layout from "../layouts/Layout.astro";
             svgContainer.innerHTML = finalSvgCode;
 
             if (finalSvgCode && finalSvgCode.trim() !== "") {
-                await saveToPocketBase(prompt, finalSvgCode);
+                currentPrompt = prompt;
+                currentSvgCode = finalSvgCode;
+                saveButton.classList.remove("hidden");
             }
         } catch (error) {
             console.error("Erreur lors de la génération:", error);
@@ -137,9 +200,52 @@ import Layout from "../layouts/Layout.astro";
         generateButton.disabled = false;
     }
 
+    function showSaveModal() {
+        const modal = document.getElementById("saveModal");
+        const preview = document.getElementById("modalSvgPreview");
+        preview.innerHTML = currentSvgCode;
+        modal.showModal();
+    }
+
+    async function confirmSave() {
+        const modal = document.getElementById("saveModal");
+        const success = await saveToPocketBase(
+            currentPrompt,
+            currentSvgCode,
+            promptList,
+        );
+
+        if (success) {
+            const saveButton = document.getElementById("save-button");
+            saveButton.classList.add("hidden");
+        }
+
+        modal.close();
+    }
+
+    function cancelSave() {
+        const modal = document.getElementById("saveModal");
+        modal.close();
+    }
+
     const generateButton = document.getElementById("generate-button");
     if (generateButton) {
         generateButton.addEventListener("click", handleSubmit);
+    }
+
+    const saveButton = document.getElementById("save-button");
+    if (saveButton) {
+        saveButton.addEventListener("click", showSaveModal);
+    }
+
+    const confirmSaveButton = document.getElementById("confirmSave");
+    if (confirmSaveButton) {
+        confirmSaveButton.addEventListener("click", confirmSave);
+    }
+
+    const cancelSaveButton = document.getElementById("cancelSave");
+    if (cancelSaveButton) {
+        cancelSaveButton.addEventListener("click", cancelSave);
     }
 
     const editButton = document.getElementById("edit-button");

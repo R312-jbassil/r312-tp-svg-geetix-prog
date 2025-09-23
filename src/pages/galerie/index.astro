@@ -1,5 +1,5 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "../../layouts/Layout.astro";
 import PocketBase from "pocketbase";
 
 const pb = new PocketBase("http://127.0.0.1:8090/");
@@ -47,6 +47,9 @@ try {
                     </div>
                 )
             }
+            <div class="flex justify-center mt-8">
+                <a href="/generator" class="inline-block px-6 py-3 bg-purple-600 text-white font-medium rounded-lg shadow-md hover:bg-purple-700 transition-colors duration-300">Passer à la génération</a>
+            </div>
         </div>
     </div>
 </Layout>
