@@ -1,6 +1,9 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import PocketBase from "pocketbase";
+import { ui } from "../../i18n/ui.js";
+
+const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 
 const { id } = Astro.params;
 const pb = new PocketBase("http://127.0.0.1:8090/");
@@ -11,7 +14,7 @@ let error = null;
 try {
     record = await pb.collection("SVG").getOne(id);
 } catch (err) {
-    error = "Enregistrement non trouvé";
+    error = ui[locale].svgDetail.notFound;
     console.error("Erreur lors de la récupération:", err);
 }
 
@@ -26,17 +29,15 @@ if (record?.chat_history) {
 ---
 
 <Layout>
-    <!-- Container principal avec position relative -->
     <div class="relative min-h-screen bg-gradient-to-br from-purple-200 to-gray-100">
-        <!-- Contenu principal avec padding bottom pour laisser la place au formulaire -->
         <div class="p-8 pb-32">
             <div class="max-w-4xl mx-auto">
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="text-3xl font-bold text-purple-800">
-                        Détails du SVG
+                        {ui[locale].svgDetail.title}
                     </h1>
                     <a href="/galerie" class="btn btn-secondary">
-                        ← Retour à la galerie
+                        {ui[locale].svgDetail.backToGallery}
                     </a>
                 </div>
 
@@ -44,7 +45,7 @@ if (record?.chat_history) {
                     <div class="text-center py-16">
                         <p class="text-xl text-red-600">{error}</p>
                         <a href="/galerie" class="btn btn-primary mt-4">
-                            Retour à la galerie
+                            {ui[locale].svgDetail.backToGallery}
                         </a>
                     </div>
                 ) : (
@@ -52,7 +53,7 @@ if (record?.chat_history) {
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div>
                                 <h2 class="text-xl font-semibold mb-4">
-                                    Aperçu SVG
+                                    {ui[locale].svgDetail.svgPreview}
                                 </h2>
                                 <div id="svg-preview" class="bg-gray-50 p-6 rounded-lg flex items-center justify-center min-h-80">
                                     <div set:html={record.code} />
@@ -62,7 +63,7 @@ if (record?.chat_history) {
                             <div class="space-y-6">
                                 <div>
                                     <h2 class="text-xl font-semibold mb-2">
-                                        Prompt initial
+                                        {ui[locale].svgDetail.initialPrompt}
                                     </h2>
                                     <p class="bg-gray-50 p-4 rounded-lg text-gray-700">
                                         {record.prompt}
@@ -71,35 +72,35 @@ if (record?.chat_history) {
 
                                 <div>
                                     <h2 class="text-xl font-semibold mb-2">
-                                        Informations
+                                        {ui[locale].svgDetail.information}
                                     </h2>
                                     <div class="bg-gray-50 p-4 rounded-lg space-y-2">
                                         <p>
-                                            <span class="font-medium">ID:</span> {record.id}
+                                            <span class="font-medium">{ui[locale].svgDetail.id}</span> {record.id}
                                         </p>
                                         <p>
-                                            <span class="font-medium">Créé le:</span> 
-                                            {new Date(record.created).toLocaleDateString("fr-FR")} 
-                                            à {new Date(record.created).toLocaleTimeString("fr-FR")}
+                                            <span class="font-medium">{ui[locale].svgDetail.createdOn}</span> 
+                                            {new Date(record.created).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')} 
+                                            {ui[locale].svgDetail.at} {new Date(record.created).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US')}
                                         </p>
                                         <p>
-                                            <span class="font-medium">Modifié le:</span> 
-                                            {new Date(record.updated).toLocaleDateString("fr-FR")} 
-                                            à {new Date(record.updated).toLocaleTimeString("fr-FR")}
+                                            <span class="font-medium">{ui[locale].svgDetail.modifiedOn}</span> 
+                                            {new Date(record.updated).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')} 
+                                            {ui[locale].svgDetail.at} {new Date(record.updated).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US')}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h2 class="text-xl font-semibold mb-2">
-                                        Actions
+                                        {ui[locale].svgDetail.actions}
                                     </h2>
                                     <div class="flex gap-3">
                                         <button onclick="copyCode()" class="btn btn-primary">
-                                            📋 Copier le code
+                                            {ui[locale].svgDetail.copyCode}
                                         </button>
                                         <button onclick="downloadSvg()" class="btn btn-secondary">
-                                            💾 Télécharger SVG
+                                            {ui[locale].svgDetail.downloadSvg}
                                         </button>
                                     </div>
                                 </div>
@@ -108,13 +109,13 @@ if (record?.chat_history) {
 
                         <div class="mt-8">
                             <h2 class="text-xl font-semibold mb-4">
-                                Historique de conversation
+                                {ui[locale].svgDetail.conversationHistory}
                             </h2>
                             <div id="chat-history" class="bg-gray-50 p-6 rounded-lg max-h-96 overflow-y-auto space-y-4">
                                 {chatHistory.map((message, index) => (
                                     <div class={`p-3 rounded-lg ${message.role === "user" ? "bg-blue-100 ml-8" : "bg-green-100 mr-8"}`}>
                                         <p class="font-medium text-sm mb-1">
-                                            {message.role === "user" ? "👤 Utilisateur" : "🤖 Assistant"}
+                                            {message.role === "user" ? ui[locale].svgDetail.user : ui[locale].svgDetail.assistant}
                                         </p>
                                         <div class="text-sm">
                                             {message.role === "user" ? (
@@ -131,7 +132,7 @@ if (record?.chat_history) {
                         </div>
 
                         <div class="mt-8">
-                            <h2 class="text-xl font-semibold mb-2">Code SVG</h2>
+                            <h2 class="text-xl font-semibold mb-2">{ui[locale].svgDetail.svgCode}</h2>
                             <textarea
                                 id="svgCode"
                                 class="w-full h-32 p-4 bg-gray-50 rounded-lg font-mono text-sm resize-none"
@@ -143,7 +144,6 @@ if (record?.chat_history) {
             </div>
         </div>
 
-        <!-- Formulaire d'édition fixé en bas de l'écran -->
         <form 
             id="input-prompt-form" 
             class="fixed bottom-0 left-0 right-0 w-full bg-base-300 border-t border-gray-300 shadow-lg z-50" 
@@ -158,10 +158,10 @@ if (record?.chat_history) {
                         name="editPrompt" 
                         type="text" 
                         class="input input-bordered flex-grow bg-white" 
-                        placeholder="Ex: Change la couleur en rouge, ajoute des étoiles..." 
+                        placeholder={ui[locale].svgDetail.editPlaceholder}
                     />
                     <button class="btn btn-primary" type="submit">
-                        ✏️ Modifier
+                        {ui[locale].svgDetail.modify}
                     </button>
                 </div>
             </div>
@@ -175,13 +175,12 @@ if (record?.chat_history) {
     </div>
 </Layout>
 
-<script>
+<script define:vars={{ locale, ui }}>
     //@ts-nocheck
     const form = document.getElementById('input-prompt-form');
     const svgPreview = document.getElementById('svg-preview');
     const chatHistory = document.getElementById('chat-history');
 
-    // Fonction pour générer le SVG à partir du prompt
     async function generateSVG(messages) {
         const response = await fetch("/api/generateSVG", {
             method: "POST",
@@ -192,7 +191,6 @@ if (record?.chat_history) {
         return data.svg.content;
     }
 
-    // Fonction pour mettre à jour les données dans PocketBase
     async function update(updatedData) {
         const response = await fetch("/api/updateSVG", {
             method: "POST",
@@ -217,7 +215,7 @@ if (record?.chat_history) {
     function copyCode() {
         const codeTextarea = document.getElementById("svgCode");
         navigator.clipboard.writeText(codeTextarea.value).then(() => {
-            showToast("Code copié dans le presse-papiers !");
+            showToast(ui[locale].svgDetail.codeCopied);
         });
     }
 
@@ -232,41 +230,35 @@ if (record?.chat_history) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast("SVG téléchargé !");
+        showToast(ui[locale].svgDetail.svgDownloaded);
     }
 
-    // Écouteur d'événement pour le formulaire de soumission
     form?.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Empêche le rechargement de la page
+        e.preventDefault();
         const formData = new FormData(form);
         console.log(JSON.stringify(Object.fromEntries(formData)));
 
-        // Créez un objet pour le prompt de l'utilisateur
         let prompt = {
             role: 'user',
             content: formData.get('editPrompt')
         };
 
         if (!prompt.content?.trim()) {
-            showToast("Veuillez entrer un prompt", "error");
+            showToast(ui[locale].svgDetail.enterPrompt, "error");
             return;
         }
 
-        // Récupérez l'historique des messages
         let history = JSON.parse(formData.get('history')) || [];
-        history.push(prompt); // Ajoutez le nouveau prompt à l'historique
+        history.push(prompt);
 
-        // Réinitialisez le champ de saisie
         document.getElementById('prompt-input').value = '';
 
-        // Affichez un indicateur de chargement
         const originalSvg = svgPreview.innerHTML;
         svgPreview.innerHTML += `<span class="loading loading-ring loading-xl"></span>`;
         
-        // Ajoutez le prompt à l'historique du chat
         chatHistory.innerHTML += `
             <div class="p-3 rounded-lg bg-blue-100 ml-8">
-                <p class="font-medium text-sm mb-1">👤 Utilisateur</p>
+                <p class="font-medium text-sm mb-1">${ui[locale].svgDetail.user}</p>
                 <div class="text-sm">
                     <p>${prompt.content}</p>
                 </div>
@@ -274,33 +266,27 @@ if (record?.chat_history) {
         `;
 
         try {
-            // Appelez la fonction pour générer le SVG
             let aiResponse = await generateSVG(history);
-            history.push({ role: 'assistant', content: aiResponse }); // Ajoutez la réponse de l'IA à l'historique
+            history.push({ role: 'assistant', content: aiResponse });
 
-            // Extraire le SVG de la réponse
             const svgMatch = aiResponse.match(/<svg[\s\S]*?<\/svg>/i);
             aiResponse = svgMatch ? svgMatch[0] : aiResponse;
 
             console.log("svgCode: ", aiResponse);
             
-            // Mettez à jour l'affichage du SVG
             svgPreview.innerHTML = aiResponse;
 
-            // Ajoutez le code SVG à l'historique du chat
             chatHistory.innerHTML += `
                 <div class="p-3 rounded-lg bg-green-100 mr-8">
-                    <p class="font-medium text-sm mb-1">🤖 Assistant</p>
+                    <p class="font-medium text-sm mb-1">${ui[locale].svgDetail.assistant}</p>
                     <div class="text-sm">
                         <pre class="whitespace-pre-wrap font-mono text-xs">${aiResponse}</pre>
                     </div>
                 </div>
             `;
 
-            // Mettre à jour le textarea du code SVG
             document.getElementById('svgCode').value = aiResponse;
 
-            // Mettre à jour les données dans PocketBase
             const response = await update({
                 id: formData.get("id"),
                 code: aiResponse,
@@ -309,20 +295,18 @@ if (record?.chat_history) {
             const data = await response.json();
 
             if (data.success) {
-                showToast("SVG updated successfully");
-                // Mettre à jour le champ hidden pour les prochaines modifications
+                showToast(ui[locale].svgDetail.svgUpdatedSuccess);
                 form.querySelector('input[name="history"]').value = JSON.stringify(history);
             } else {
-                showToast("Failed to update SVG", "error");
+                showToast(ui[locale].svgDetail.svgUpdateFailed, "error");
             }
 
         } catch (error) {
             console.error("Erreur:", error);
-            showToast("Erreur lors de la génération", "error");
+            showToast(ui[locale].svgDetail.generationError, "error");
             svgPreview.innerHTML = originalSvg;
         }
 
-        // Scroll vers le bas de l'historique
         chatHistory.scrollTop = chatHistory.scrollHeight;
     });
 

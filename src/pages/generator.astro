@@ -1,12 +1,15 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { ui } from "../i18n/ui.js";
+
+const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 ---
 
 <Layout>
     <div class="flex h-screen bg-gray-100">
         <div class="w-1/2 bg-white flex flex-col border-r border-gray-300">
             <div class="flex justify-end p-4">
-                <a href="/galerie" class="btn btn-secondary">Go to Galerie</a>
+                <a href="/galerie" class="btn btn-secondary">{ui[locale].generator.goToGalerie}</a>
             </div>
             <div id="svg-container" class="flex-1 flex items-center justify-center p-8">
                 <div class="text-gray-400 text-center">
@@ -21,19 +24,19 @@ import Layout from "../layouts/Layout.astro";
                             d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
                         ></path>
                     </svg>
-                    <p>Votre SVG apparaîtra ici</p>
+                    <p>{ui[locale].generator.yourSvgHere}</p>
                 </div>
             </div>
         </div>
 
         <div class="w-1/2 bg-cyan-400 flex flex-col">
             <div class="bg-cyan-500 text-white text-center py-3 font-semibold">
-                Conversation
+                {ui[locale].generator.conversation}
             </div>
 
             <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
                 <div class="text-center text-cyan-700 text-sm mb-4">
-                    Décrivez le SVG que vous souhaitez générer
+                    {ui[locale].generator.describe}
                 </div>
             </div>
 
@@ -42,25 +45,25 @@ import Layout from "../layouts/Layout.astro";
                     <input
                         type="text"
                         id="user-prompt"
-                        placeholder="Tapez votre prompt ici pour SVG..."
+                        placeholder={ui[locale].generator.promptPlaceholder}
                         class="flex-1 px-4 py-3 rounded-lg border-none outline-none text-gray-800"
                     />
                     <button
                         id="generate-button"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
                     >
-                        Envoyer
+                        {ui[locale].generator.send}
                     </button>
                 </div>
                 <div class="flex gap-2 mt-3">
                     <button class="btn btn-secondary hidden" id="edit-button">
-                        ✏️ Modifier
+                        {ui[locale].generator.edit}
                     </button>
                     <button
                         id="save-button"
                         class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium hidden"
                     >
-                        💾 Sauvegarder le SVG
+                        {ui[locale].generator.save}
                     </button>
                 </div>
             </div>
@@ -69,9 +72,9 @@ import Layout from "../layouts/Layout.astro";
 
     <dialog id="saveModal" class="modal">
         <div class="modal-box">
-            <h3 class="font-bold text-lg">Sauvegarder le SVG</h3>
+            <h3 class="font-bold text-lg">{ui[locale].generator.saveModalTitle}</h3>
             <p class="py-4">
-                Voulez-vous sauvegarder ce SVG dans votre galerie ?
+                {ui[locale].generator.saveModalText}
             </p>
 
             <div class="bg-gray-100 p-4 rounded-lg mb-4">
@@ -84,10 +87,10 @@ import Layout from "../layouts/Layout.astro";
 
             <div class="modal-action">
                 <button id="confirmSave" class="btn btn-success">
-                    Oui, sauvegarder
+                    {ui[locale].generator.yesSave}
                 </button>
                 <button id="cancelSave" class="btn btn-outline">
-                    Non, annuler
+                    {ui[locale].generator.noCancel}
                 </button>
             </div>
         </div>
@@ -98,12 +101,12 @@ import Layout from "../layouts/Layout.astro";
 
     <div id="toast" class="toast toast-end hidden">
         <div class="alert alert-success">
-            <span>SVG sauvegardé avec succès !</span>
+            <span>{ui[locale].generator.svgSavedSuccess}</span>
         </div>
     </div>
 </Layout>
 
-<script>
+<script define:vars={{ locale, ui }}>
     //@ts-nocheck
 
     let promptList = [];
@@ -124,7 +127,7 @@ import Layout from "../layouts/Layout.astro";
             });
 
             if (response.ok) {
-                showToast("SVG sauvegardé avec succès !");
+                showToast(ui[locale].generator.svgSavedSuccess);
                 return true;
             } else {
                 console.error(
@@ -187,14 +190,12 @@ import Layout from "../layouts/Layout.astro";
         addMessageToChat(prompt, true);
         promptElement.value = "";
 
-        // Seulement pour la première génération (nouveau SVG)
         if (!isEditMode) {
             promptList.length = 0;
             promptList.push({ role: "user", content: prompt });
             currentPrompt = prompt;
             isEditMode = true;
         } else {
-            // En mode édition, on ajoute à l'historique existant
             promptList.push({ role: "user", content: prompt });
         }
 
@@ -202,14 +203,14 @@ import Layout from "../layouts/Layout.astro";
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "bg-pink-500 text-white p-3 rounded-lg max-w-md";
         loadingDiv.innerHTML =
-            '<span class="loading loading-dots loading-sm"></span> Génération en cours...';
+            `<span class="loading loading-dots loading-sm"></span> ${ui[locale].generator.generationInProgress}`;
         loadingDiv.id = "loading-message";
         chatContainer.appendChild(loadingDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
 
         const generateButton = document.getElementById("generate-button");
         generateButton.disabled = true;
-        generateButton.textContent = "Génération...";
+        generateButton.textContent = ui[locale].generator.generating;
 
         try {
             const aiResponse = await generateSVG(promptList);
@@ -241,9 +242,9 @@ import Layout from "../layouts/Layout.astro";
                 editButton.classList.remove("hidden");
 
                 const promptInput = document.getElementById("user-prompt");
-                promptInput.placeholder = "Modifiez votre SVG...";
+                promptInput.placeholder = ui[locale].generator.modifyPrompt;
             } else {
-                addMessageToChat("Aucun SVG généré", false);
+                addMessageToChat(ui[locale].generator.noSvgGenerated, false);
             }
 
         } catch (error) {
@@ -254,11 +255,11 @@ import Layout from "../layouts/Layout.astro";
                 loadingMessage.remove();
             }
 
-            addMessageToChat("Erreur lors de la génération du SVG", false);
+            addMessageToChat(ui[locale].generator.generationError, false);
         }
 
         generateButton.disabled = false;
-        generateButton.textContent = "Envoyer";
+        generateButton.textContent = ui[locale].generator.send;
     }
 
     function showSaveModal() {
@@ -288,12 +289,12 @@ import Layout from "../layouts/Layout.astro";
             isEditMode = false;
             
             const promptInput = document.getElementById("user-prompt");
-            promptInput.placeholder = "Tapez votre prompt ici pour SVG...";
+            promptInput.placeholder = ui[locale].generator.promptPlaceholder;
             
             const chatContainer = document.getElementById("chat-container");
             chatContainer.innerHTML = `
                 <div class="text-center text-cyan-700 text-sm mb-4">
-                    Décrivez le SVG que vous souhaitez générer
+                    ${ui[locale].generator.describe}
                 </div>
             `;
             
@@ -311,7 +312,7 @@ import Layout from "../layouts/Layout.astro";
                             d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
                         ></path>
                     </svg>
-                    <p>Votre SVG apparaîtra ici</p>
+                    <p>${ui[locale].generator.yourSvgHere}</p>
                 </div>
             `;
         }
@@ -344,7 +345,7 @@ import Layout from "../layouts/Layout.astro";
         const chatContainer = document.getElementById("chat-container");
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "bg-pink-500 text-white p-3 rounded-lg max-w-md";
-        loadingDiv.innerHTML = '<span class="loading loading-dots loading-sm"></span> Modification en cours...';
+        loadingDiv.innerHTML = `<span class="loading loading-dots loading-sm"></span> ${ui[locale].generator.modificationInProgress}`;
         loadingDiv.id = "loading-message";
         chatContainer.appendChild(loadingDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -371,7 +372,7 @@ import Layout from "../layouts/Layout.astro";
                 currentSvgCode = finalSvgCode;
                 promptList.push({ role: "assistant", content: finalSvgCode });
             } else {
-                addMessageToChat("Aucun SVG généré lors de la modification", false);
+                addMessageToChat(ui[locale].generator.modificationError, false);
             }
             
         } catch (error) {
@@ -382,7 +383,7 @@ import Layout from "../layouts/Layout.astro";
                 loadingMessage.remove();
             }
             
-            addMessageToChat("Erreur lors de la modification du SVG", false);
+            addMessageToChat(ui[locale].generator.generationError, false);
         }
         
         generateButton.disabled = false;

@@ -1,6 +1,9 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import PocketBase from "pocketbase";
+import { ui } from "../../i18n/ui.js";
+
+const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 
 const pb = new PocketBase("http://127.0.0.1:8090/");
 
@@ -19,13 +22,13 @@ try {
     <div class="min-h-screen bg-gradient-to-br from-purple-200 to-gray-100 p-8">
         <div class="max-w-6xl mx-auto">
             <h1 class="text-3xl font-bold text-center text-purple-800 mb-8">
-                Galerie SVG
+                {ui[locale].gallery.title}
             </h1>
 
             {
                 svgRecords.length === 0 ? (
                     <div class="text-center py-16">
-                        <p class="text-xl text-gray-600">Aucun SVG trouvé.</p>
+                        <p class="text-xl text-gray-600">{ui[locale].gallery.noSvgFound}</p>
                     </div>
                 ) : (
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -41,7 +44,7 @@ try {
                                     <p class="text-gray-400 text-xs mt-2">
                                         {new Date(
                                             record.created,
-                                        ).toLocaleDateString("fr-FR")}
+                                        ).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
                                     </p>
                                 </div>
                             </a>
@@ -50,7 +53,7 @@ try {
                 )
             }
             <div class="flex justify-center mt-8">
-                <a href="/generator" class="inline-block px-6 py-3 bg-purple-600 text-white font-medium rounded-lg shadow-md hover:bg-purple-700 transition-colors duration-300">Passer à la génération</a>
+                <a href="/generator" class="inline-block px-6 py-3 bg-purple-600 text-white font-medium rounded-lg shadow-md hover:bg-purple-700 transition-colors duration-300">{ui[locale].gallery.goToGeneration}</a>
             </div>
         </div>
     </div>
