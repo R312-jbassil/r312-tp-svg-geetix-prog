@@ -187,12 +187,16 @@ import Layout from "../layouts/Layout.astro";
         addMessageToChat(prompt, true);
         promptElement.value = "";
 
+        // Seulement pour la première génération (nouveau SVG)
         if (!isEditMode) {
             promptList.length = 0;
+            promptList.push({ role: "user", content: prompt });
+            currentPrompt = prompt;
             isEditMode = true;
+        } else {
+            // En mode édition, on ajoute à l'historique existant
+            promptList.push({ role: "user", content: prompt });
         }
-
-        promptList.push({ role: "user", content: prompt });
 
         const chatContainer = document.getElementById("chat-container");
         const loadingDiv = document.createElement("div");
@@ -228,9 +232,6 @@ import Layout from "../layouts/Layout.astro";
                 const svgContainer = document.getElementById("svg-container");
                 svgContainer.innerHTML = finalSvgCode;
 
-                if (!isEditMode || promptList.length <= 2) {
-                    currentPrompt = promptList[0].content;
-                }
                 currentSvgCode = finalSvgCode;
                 promptList.push({ role: "assistant", content: finalSvgCode });
 
@@ -323,10 +324,71 @@ import Layout from "../layouts/Layout.astro";
         modal.close();
     }
 
-    function handleEdit() {
-        const promptInput = document.getElementById("user-prompt");
-        promptInput.focus();
-        promptInput.placeholder = "Décrivez les modifications à apporter...";
+    async function handleEdit() {
+        const promptElement = document.getElementById("user-prompt");
+        const prompt = promptElement.value.trim();
+        
+        if (!prompt) return;
+        
+        console.log("Prompt de modification : ", prompt);
+        
+        addMessageToChat(prompt, true);
+        promptElement.value = "";
+        
+        promptList.push({ role: "user", content: prompt });
+        
+        const svgContainer = document.getElementById("svg-container");
+        const generateButton = document.getElementById("generate-button");
+        const editButton = document.getElementById("edit-button");
+        
+        const chatContainer = document.getElementById("chat-container");
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "bg-pink-500 text-white p-3 rounded-lg max-w-md";
+        loadingDiv.innerHTML = '<span class="loading loading-dots loading-sm"></span> Modification en cours...';
+        loadingDiv.id = "loading-message";
+        chatContainer.appendChild(loadingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        generateButton.disabled = true;
+        editButton.disabled = true;
+        
+        try {
+            const aiResponse = await generateSVG(promptList);
+            
+            const loadingMessage = document.getElementById("loading-message");
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+            
+            const svgMatch = aiResponse.content.match(/<svg[\s\S]*?<\/svg>/i);
+            const finalSvgCode = svgMatch ? svgMatch[0] : aiResponse.content;
+            
+            console.log("Code SVG modifié : ", finalSvgCode);
+            
+            if (finalSvgCode && finalSvgCode.trim() !== "") {
+                addMessageToChat(finalSvgCode, false);
+                svgContainer.innerHTML = finalSvgCode;
+                currentSvgCode = finalSvgCode;
+                promptList.push({ role: "assistant", content: finalSvgCode });
+            } else {
+                addMessageToChat("Aucun SVG généré lors de la modification", false);
+            }
+            
+        } catch (error) {
+            console.error("Erreur lors de la modification:", error);
+            
+            const loadingMessage = document.getElementById("loading-message");
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+            
+            addMessageToChat("Erreur lors de la modification du SVG", false);
+        }
+        
+        generateButton.disabled = false;
+        editButton.disabled = false;
+        
+        console.log("Historique des prompts : ", promptList);
     }
 
     const generateButton = document.getElementById("generate-button");
@@ -338,7 +400,11 @@ import Layout from "../layouts/Layout.astro";
     if (promptInput) {
         promptInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
-                handleSubmit();
+                if (isEditMode) {
+                    handleEdit();
+                } else {
+                    handleSubmit();
+                }
             }
         });
     }
