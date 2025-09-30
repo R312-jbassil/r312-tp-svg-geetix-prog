@@ -30,19 +30,21 @@ try {
                 ) : (
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {svgRecords.map((record) => (
-                            <div class="bg-white rounded-lg shadow-md p-4">
-                                <div class="h-48 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-                                    <div set:html={record.code} />
+                            <a href={`/galerie/${record.id}`} class="block">
+                                <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+                                    <div class="h-48 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
+                                        <div set:html={record.code} />
+                                    </div>
+                                    <p class="text-gray-700 text-sm">
+                                        {record.prompt}
+                                    </p>
+                                    <p class="text-gray-400 text-xs mt-2">
+                                        {new Date(
+                                            record.created,
+                                        ).toLocaleDateString("fr-FR")}
+                                    </p>
                                 </div>
-                                <p class="text-gray-700 text-sm">
-                                    {record.prompt}
-                                </p>
-                                <p class="text-gray-400 text-xs mt-2">
-                                    {new Date(
-                                        record.created,
-                                    ).toLocaleDateString("fr-FR")}
-                                </p>
-                            </div>
+                            </a>
                         ))}
                     </div>
                 )

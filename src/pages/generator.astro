@@ -4,13 +4,11 @@ import Layout from "../layouts/Layout.astro";
 
 <Layout>
     <div class="flex h-screen bg-gray-100">
-        <div
-            class="w-1/2 bg-white flex items-center justify-center border-r border-gray-300"
-        >
-            <div
-                id="svg-container"
-                class="w-full h-full flex items-center justify-center p-8"
-            >
+        <div class="w-1/2 bg-white flex flex-col border-r border-gray-300">
+            <div class="flex justify-end p-4">
+                <a href="/galerie" class="btn btn-secondary">Go to Galerie</a>
+            </div>
+            <div id="svg-container" class="flex-1 flex items-center justify-center p-8">
                 <div class="text-gray-400 text-center">
                     <svg
                         width="64"
@@ -33,10 +31,7 @@ import Layout from "../layouts/Layout.astro";
                 Conversation
             </div>
 
-            <div
-                id="chat-container"
-                class="flex-1 overflow-y-auto p-4 space-y-4"
-            >
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
                 <div class="text-center text-cyan-700 text-sm mb-4">
                     Décrivez le SVG que vous souhaitez générer
                 </div>
@@ -57,15 +52,17 @@ import Layout from "../layouts/Layout.astro";
                         Envoyer
                     </button>
                 </div>
-                <button class="btn btn-secondary m-2" id="edit-button"
-                    >✏️</button
-                >
-                <button
-                    id="save-button"
-                    class="w-full mt-3 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium hidden"
-                >
-                    💾 Sauvegarder le SVG
-                </button>
+                <div class="flex gap-2 mt-3">
+                    <button class="btn btn-secondary hidden" id="edit-button">
+                        ✏️ Modifier
+                    </button>
+                    <button
+                        id="save-button"
+                        class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium hidden"
+                    >
+                        💾 Sauvegarder le SVG
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -86,12 +83,12 @@ import Layout from "../layouts/Layout.astro";
             </div>
 
             <div class="modal-action">
-                <button id="confirmSave" class="btn btn-success"
-                    >Oui, sauvegarder</button
-                >
-                <button id="cancelSave" class="btn btn-outline"
-                    >Non, annuler</button
-                >
+                <button id="confirmSave" class="btn btn-success">
+                    Oui, sauvegarder
+                </button>
+                <button id="cancelSave" class="btn btn-outline">
+                    Non, annuler
+                </button>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop">
@@ -112,6 +109,7 @@ import Layout from "../layouts/Layout.astro";
     let promptList = [];
     let currentPrompt = "";
     let currentSvgCode = "";
+    let isEditMode = false;
 
     async function saveToPocketBase(prompt, svgCode, chatHistory) {
         try {
@@ -187,10 +185,13 @@ import Layout from "../layouts/Layout.astro";
         if (!prompt) return;
 
         addMessageToChat(prompt, true);
-
         promptElement.value = "";
 
-        promptList.length = 0;
+        if (!isEditMode) {
+            promptList.length = 0;
+            isEditMode = true;
+        }
+
         promptList.push({ role: "user", content: prompt });
 
         const chatContainer = document.getElementById("chat-container");
@@ -214,20 +215,36 @@ import Layout from "../layouts/Layout.astro";
                 loadingMessage.remove();
             }
 
+            console.log("Réponse IA:", aiResponse);
+
             const svgMatch = aiResponse.content.match(/<svg[\s\S]*?<\/svg>/i);
             const finalSvgCode = svgMatch ? svgMatch[0] : aiResponse.content;
 
-            addMessageToChat(finalSvgCode, false);
+            console.log("SVG final:", finalSvgCode);
 
-            const svgContainer = document.getElementById("svg-container");
-            svgContainer.innerHTML = finalSvgCode;
+            if (finalSvgCode && finalSvgCode.trim() !== "") {
+                addMessageToChat(finalSvgCode, false);
 
-            currentPrompt = prompt;
-            currentSvgCode = finalSvgCode;
-            promptList.push({ role: "assistant", content: finalSvgCode });
+                const svgContainer = document.getElementById("svg-container");
+                svgContainer.innerHTML = finalSvgCode;
 
-            const saveButton = document.getElementById("save-button");
-            saveButton.classList.remove("hidden");
+                if (!isEditMode || promptList.length <= 2) {
+                    currentPrompt = promptList[0].content;
+                }
+                currentSvgCode = finalSvgCode;
+                promptList.push({ role: "assistant", content: finalSvgCode });
+
+                const saveButton = document.getElementById("save-button");
+                const editButton = document.getElementById("edit-button");
+                saveButton.classList.remove("hidden");
+                editButton.classList.remove("hidden");
+
+                const promptInput = document.getElementById("user-prompt");
+                promptInput.placeholder = "Modifiez votre SVG...";
+            } else {
+                addMessageToChat("Aucun SVG généré", false);
+            }
+
         } catch (error) {
             console.error("Erreur lors de la génération:", error);
 
@@ -260,7 +277,42 @@ import Layout from "../layouts/Layout.astro";
 
         if (success) {
             const saveButton = document.getElementById("save-button");
+            const editButton = document.getElementById("edit-button");
             saveButton.classList.add("hidden");
+            editButton.classList.add("hidden");
+            
+            promptList = [];
+            currentPrompt = "";
+            currentSvgCode = "";
+            isEditMode = false;
+            
+            const promptInput = document.getElementById("user-prompt");
+            promptInput.placeholder = "Tapez votre prompt ici pour SVG...";
+            
+            const chatContainer = document.getElementById("chat-container");
+            chatContainer.innerHTML = `
+                <div class="text-center text-cyan-700 text-sm mb-4">
+                    Décrivez le SVG que vous souhaitez générer
+                </div>
+            `;
+            
+            const svgContainer = document.getElementById("svg-container");
+            svgContainer.innerHTML = `
+                <div class="text-gray-400 text-center">
+                    <svg
+                        width="64"
+                        height="64"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="mx-auto mb-4"
+                    >
+                        <path
+                            d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
+                        ></path>
+                    </svg>
+                    <p>Votre SVG apparaîtra ici</p>
+                </div>
+            `;
         }
 
         modal.close();
@@ -269,6 +321,12 @@ import Layout from "../layouts/Layout.astro";
     function cancelSave() {
         const modal = document.getElementById("saveModal");
         modal.close();
+    }
+
+    function handleEdit() {
+        const promptInput = document.getElementById("user-prompt");
+        promptInput.focus();
+        promptInput.placeholder = "Décrivez les modifications à apporter...";
     }
 
     const generateButton = document.getElementById("generate-button");
@@ -300,37 +358,7 @@ import Layout from "../layouts/Layout.astro";
         cancelSaveButton.addEventListener("click", cancelSave);
     }
 
-    async function handleEdit() {
-        let prompt = "";
-        let aiResponse = "";
-        const promptElement = document.getElementById("user-prompt");
-        prompt = promptElement ? promptElement.value : "";
-        console.log("Prompt soumis : ", prompt);
-        // Ajout du prompt de l'utilisateur à la liste
-        promptList.push({ role: "user", content: prompt });
-        const svgContainer = document.getElementById("svg-container");
-        // Afficher un spinner de chargement
-        svgContainer.innerHTML += `<span class="loading loading-ring loading-xl"></span>`;
-        generateButton.disabled = true;
-        editButton.disabled = true;
-        let svgOutput = document.getElementById("svg-output");
-        // Appeler la fonction pour générer le SVG
-        aiResponse = await generateSVG(promptList);
-        // Extraire le SVG de la réponse
-        const svgMatch = aiResponse.content.match(/<svg[\s\S]*?<\/svg>/i);
-        aiResponse.content = svgMatch ? svgMatch[0] : "";
-        console.log("Code SVG généré : ", aiResponse.content);
-        // Ajouter la réponse de l'IA à la liste des prompts
-        promptList.push(aiResponse);
-        // Afficher le SVG généré
-        svgOutput.textContent = aiResponse.content;
-        svgContainer.innerHTML = aiResponse.content;
-        // Réactiver les boutons
-        generateButton.disabled = false;
-        editButton.disabled = false;
-        console.log("Historique des prompts : ", promptList);
-    }
-
+    const editButton = document.getElementById("edit-button");
     if (editButton) {
         editButton.addEventListener("click", handleEdit);
     }

@@ -23,7 +23,7 @@ export const POST = async ({ request }) => {
 
         let SystemMessage = {
             role: "system",
-            content: "You are an SVG code generator. Generate SVG code for the following messages. Make sure to include ids for each part of the generated SVG.",
+            content: "You are an SVG code generator. Generate SVG code for the following messages. Make sure to include ids for each part of the generated SVG. Always return valid SVG code even for modifications.",
         };
 
         const chatCompletion = await client.chat.completions.create({
@@ -35,7 +35,9 @@ export const POST = async ({ request }) => {
 
         const svgMatch = message.content.match(/<svg[\s\S]*?<\/svg>/i);
 
-        message.content = svgMatch ? svgMatch[0] : "";
+        if (svgMatch) {
+            message.content = svgMatch[0];
+        }
 
         return new Response(JSON.stringify({ svg: message }), {
             headers: { "Content-Type": "application/json" },

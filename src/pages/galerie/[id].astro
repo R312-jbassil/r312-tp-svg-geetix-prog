@@ -1,0 +1,156 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PocketBase from "pocketbase";
+
+const { id } = Astro.params;
+const pb = new PocketBase("http://127.0.0.1:8090/");
+
+let record = null;
+let error = null;
+
+try {
+    record = await pb.collection("SVG").getOne(id);
+} catch (err) {
+    error = "Enregistrement non trouvé";
+    console.error("Erreur lors de la récupération:", err);
+}
+
+let chatHistory = [];
+if (record?.chat_history) {
+    try {
+        chatHistory = JSON.parse(record.chat_history);
+    } catch (err) {
+        console.error("Erreur parsing chat_history:", err);
+    }
+}
+---
+
+<Layout>
+    <div class="min-h-screen bg-gradient-to-br from-purple-200 to-gray-100 p-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-purple-800">Détails du SVG</h1>
+                <a href="/galerie" class="btn btn-secondary">← Retour à la galerie</a>
+            </div>
+
+            {error ? (
+                <div class="text-center py-16">
+                    <p class="text-xl text-red-600">{error}</p>
+                    <a href="/galerie" class="btn btn-primary mt-4">Retour à la galerie</a>
+                </div>
+            ) : (
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h2 class="text-xl font-semibold mb-4">Aperçu SVG</h2>
+                            <div class="bg-gray-50 p-6 rounded-lg flex items-center justify-center min-h-80">
+                                <div set:html={record.code} />
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <h2 class="text-xl font-semibold mb-2">Prompt initial</h2>
+                                <p class="bg-gray-50 p-4 rounded-lg text-gray-700">{record.prompt}</p>
+                            </div>
+
+                            <div>
+                                <h2 class="text-xl font-semibold mb-2">Informations</h2>
+                                <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                                    <p><span class="font-medium">ID:</span> {record.id}</p>
+                                    <p><span class="font-medium">Créé le:</span> {new Date(record.created).toLocaleDateString("fr-FR")} à {new Date(record.created).toLocaleTimeString("fr-FR")}</p>
+                                    <p><span class="font-medium">Modifié le:</span> {new Date(record.updated).toLocaleDateString("fr-FR")} à {new Date(record.updated).toLocaleTimeString("fr-FR")}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h2 class="text-xl font-semibold mb-2">Actions</h2>
+                                <div class="flex gap-3">
+                                    <button onclick="copyCode()" class="btn btn-primary">
+                                        📋 Copier le code
+                                    </button>
+                                    <button onclick="downloadSvg()" class="btn btn-secondary">
+                                        💾 Télécharger SVG
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {chatHistory.length > 0 && (
+                        <div class="mt-8">
+                            <h2 class="text-xl font-semibold mb-4">Historique de conversation</h2>
+                            <div class="bg-gray-50 p-6 rounded-lg max-h-96 overflow-y-auto space-y-4">
+                                {chatHistory.map((message, index) => (
+                                    <div class={`p-3 rounded-lg ${message.role === 'user' ? 'bg-blue-100 ml-8' : 'bg-green-100 mr-8'}`}>
+                                        <p class="font-medium text-sm mb-1">
+                                            {message.role === 'user' ? '👤 Utilisateur' : '🤖 Assistant'}
+                                        </p>
+                                        <div class="text-sm">
+                                            {message.role === 'user' ? (
+                                                <p>{message.content}</p>
+                                            ) : (
+                                                <pre class="whitespace-pre-wrap font-mono text-xs">{message.content}</pre>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div class="mt-8">
+                        <h2 class="text-xl font-semibold mb-2">Code SVG</h2>
+                        <textarea 
+                            id="svgCode"
+                            class="w-full h-32 p-4 bg-gray-50 rounded-lg font-mono text-sm resize-none"
+                            readonly
+                        >{record.code}</textarea>
+                    </div>
+                </div>
+            )}
+        </div>
+    </div>
+
+    <div id="toast" class="toast toast-end hidden">
+        <div class="alert alert-success">
+            <span>Code copié dans le presse-papiers !</span>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        const alertDiv = toast.querySelector(".alert");
+        alertDiv.querySelector("span").textContent = message;
+        toast.classList.remove("hidden");
+        
+        setTimeout(() => {
+            toast.classList.add("hidden");
+        }, 3000);
+    }
+
+    function copyCode() {
+        const codeTextarea = document.getElementById("svgCode");
+        navigator.clipboard.writeText(codeTextarea.value).then(() => {
+            showToast("Code copié dans le presse-papiers !");
+        });
+    }
+
+    function downloadSvg() {
+        const code = document.getElementById("svgCode").value;
+        const blob = new Blob([code], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "generated-svg.svg";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    window.copyCode = copyCode;
+    window.downloadSvg = downloadSvg;
+</script>
