@@ -22,17 +22,40 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between items-center h-16">
                         <div class="flex items-center">
-                            <h1 class="text-xl font-semibold text-gray-900">SVG Generator</h1>
+                            <h1 class="text-xl font-semibold text-gray-900">
+                                SVG Generator
+                            </h1>
                         </div>
-                        
-                        <!-- Sélecteur de langue -->
-                        <form method="POST" action={Astro.url.pathname}>
-                            <select name="language" class="select select-bordered" onchange="this.form.submit()">
-                                <option disabled selected={!locale}>{ui[locale].nav.language}</option>
-                                <option value="en" selected={locale === 'en'}>English</option>
-                                <option value="fr" selected={locale === 'fr'}>Français</option>
-                            </select>
-                        </form>
+                        <div class="flex">
+                            <a href="/login" class="btn btn-secondary mr-5">Connexion</a>
+                            <form
+                                method="POST"
+                                action="/api/logout"
+                                class="m-0 pr-5"
+                            >
+                                <button type="submit" class="btn btn-primary"
+                                    >Logout</button
+                                >
+                            </form>
+                            <!-- Sélecteur de langue -->
+                            <form method="POST" action={Astro.url.pathname}>
+                                <select
+                                    name="language"
+                                    class="select select-bordered"
+                                    onchange="this.form.submit()"
+                                >
+                                    <option disabled selected={!locale}
+                                        >{ui[locale].nav.language}</option
+                                    >
+                                    <option value="en" selected={locale === "en"}
+                                        >English</option
+                                    >
+                                    <option value="fr" selected={locale === "fr"}
+                                        >Français</option
+                                    >
+                                </select>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </header>
