@@ -9,9 +9,14 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
     <div class="flex h-screen bg-gray-100">
         <div class="w-1/2 bg-white flex flex-col border-r border-gray-300">
             <div class="flex justify-end p-4">
-                <a href="/galerie" class="btn btn-secondary">{ui[locale].generator.goToGalerie}</a>
+                <a href="/galerie" class="btn btn-secondary"
+                    >{ui[locale].generator.goToGalerie}</a
+                >
             </div>
-            <div id="svg-container" class="flex-1 flex items-center justify-center p-8">
+            <div
+                id="svg-container"
+                class="flex-1 flex items-center justify-center p-8"
+            >
                 <div class="text-gray-400 text-center">
                     <svg
                         width="64"
@@ -34,7 +39,10 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
                 {ui[locale].generator.conversation}
             </div>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div
+                id="chat-container"
+                class="flex-1 overflow-y-auto p-4 space-y-4"
+            >
                 <div class="text-center text-cyan-700 text-sm mb-4">
                     {ui[locale].generator.describe}
                 </div>
@@ -72,7 +80,9 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 
     <dialog id="saveModal" class="modal">
         <div class="modal-box">
-            <h3 class="font-bold text-lg">{ui[locale].generator.saveModalTitle}</h3>
+            <h3 class="font-bold text-lg">
+                {ui[locale].generator.saveModalTitle}
+            </h3>
             <p class="py-4">
                 {ui[locale].generator.saveModalText}
             </p>
@@ -113,6 +123,9 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
     let currentPrompt = "";
     let currentSvgCode = "";
     let isEditMode = false;
+    
+    //const user = JSON.parse(localStorage.getItem("user"));
+    //console.log("l'utilisateur est : ",user);
 
     async function saveToPocketBase(prompt, svgCode, chatHistory) {
         try {
@@ -123,6 +136,7 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
                     prompt: prompt,
                     code: svgCode,
                     chat_history: chatHistory,
+                   // user: user?.id,
                 }),
             });
 
@@ -202,8 +216,7 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
         const chatContainer = document.getElementById("chat-container");
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "bg-pink-500 text-white p-3 rounded-lg max-w-md";
-        loadingDiv.innerHTML =
-            `<span class="loading loading-dots loading-sm"></span> ${ui[locale].generator.generationInProgress}`;
+        loadingDiv.innerHTML = `<span class="loading loading-dots loading-sm"></span> ${ui[locale].generator.generationInProgress}`;
         loadingDiv.id = "loading-message";
         chatContainer.appendChild(loadingDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -246,7 +259,6 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
             } else {
                 addMessageToChat(ui[locale].generator.noSvgGenerated, false);
             }
-
         } catch (error) {
             console.error("Erreur lors de la génération:", error);
 
@@ -282,22 +294,22 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
             const editButton = document.getElementById("edit-button");
             saveButton.classList.add("hidden");
             editButton.classList.add("hidden");
-            
+
             promptList = [];
             currentPrompt = "";
             currentSvgCode = "";
             isEditMode = false;
-            
+
             const promptInput = document.getElementById("user-prompt");
             promptInput.placeholder = ui[locale].generator.promptPlaceholder;
-            
+
             const chatContainer = document.getElementById("chat-container");
             chatContainer.innerHTML = `
                 <div class="text-center text-cyan-700 text-sm mb-4">
                     ${ui[locale].generator.describe}
                 </div>
             `;
-            
+
             const svgContainer = document.getElementById("svg-container");
             svgContainer.innerHTML = `
                 <div class="text-gray-400 text-center">
@@ -328,20 +340,20 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
     async function handleEdit() {
         const promptElement = document.getElementById("user-prompt");
         const prompt = promptElement.value.trim();
-        
+
         if (!prompt) return;
-        
+
         console.log("Prompt de modification : ", prompt);
-        
+
         addMessageToChat(prompt, true);
         promptElement.value = "";
-        
+
         promptList.push({ role: "user", content: prompt });
-        
+
         const svgContainer = document.getElementById("svg-container");
         const generateButton = document.getElementById("generate-button");
         const editButton = document.getElementById("edit-button");
-        
+
         const chatContainer = document.getElementById("chat-container");
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "bg-pink-500 text-white p-3 rounded-lg max-w-md";
@@ -349,23 +361,23 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
         loadingDiv.id = "loading-message";
         chatContainer.appendChild(loadingDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
-        
+
         generateButton.disabled = true;
         editButton.disabled = true;
-        
+
         try {
             const aiResponse = await generateSVG(promptList);
-            
+
             const loadingMessage = document.getElementById("loading-message");
             if (loadingMessage) {
                 loadingMessage.remove();
             }
-            
+
             const svgMatch = aiResponse.content.match(/<svg[\s\S]*?<\/svg>/i);
             const finalSvgCode = svgMatch ? svgMatch[0] : aiResponse.content;
-            
+
             console.log("Code SVG modifié : ", finalSvgCode);
-            
+
             if (finalSvgCode && finalSvgCode.trim() !== "") {
                 addMessageToChat(finalSvgCode, false);
                 svgContainer.innerHTML = finalSvgCode;
@@ -374,21 +386,20 @@ const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
             } else {
                 addMessageToChat(ui[locale].generator.modificationError, false);
             }
-            
         } catch (error) {
             console.error("Erreur lors de la modification:", error);
-            
+
             const loadingMessage = document.getElementById("loading-message");
             if (loadingMessage) {
                 loadingMessage.remove();
             }
-            
+
             addMessageToChat(ui[locale].generator.generationError, false);
         }
-        
+
         generateButton.disabled = false;
         editButton.disabled = false;
-        
+
         console.log("Historique des prompts : ", promptList);
     }
 

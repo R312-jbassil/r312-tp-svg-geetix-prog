@@ -2,9 +2,11 @@ import PocketBase from 'pocketbase';
 
 const pb = new PocketBase('http://127.0.0.1:8090/');
 
-export const POST = async ({ request }) => {
+export const POST = async ({ request , locals}) => {
+    console.log("User ID:", locals.user.id);
+    
     try {
-        const { prompt, code, chat_history } = await request.json();
+        const { prompt, code, chat_history, user } = await request.json();
         
         if (!prompt || !code) {
             return new Response(JSON.stringify({ 
@@ -18,7 +20,8 @@ export const POST = async ({ request }) => {
         const dataToSave = {
             prompt: prompt,
             code: code,
-            chat_history: JSON.stringify(chat_history || [])
+            chat_history: JSON.stringify(chat_history || []),
+            user: locals.user.id
         };
 
         const record = await pb.collection('SVG').create(dataToSave);
